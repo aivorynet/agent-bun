@@ -1,0 +1,25 @@
+{
+  "name": "@aivory/monitor-agent-bun",
+  "version": "1.0.0",
+  "description": "AIVory Monitor agent for Bun runtime",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bun x tsc --noEmit"
+  },
+  "keywords": [
+    "aivory",
+    "monitor",
+    "debugging",
+    "bun",
+    "error-tracking"
+  ],
+  "author": "AIVory",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}
