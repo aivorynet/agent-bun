@@ -1,5 +1,5 @@
 {
-  "name": "@aivory/monitor-agent-bun",
+  "name": "@aivorynet/monitor-agent-bun",
   "version": "0.1.0",
   "description": "AIVory Monitor agent for Bun runtime",
   "type": "module",
