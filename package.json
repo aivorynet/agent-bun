@@ -1,6 +1,6 @@
 {
   "name": "@aivory/monitor-agent-bun",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "AIVory Monitor agent for Bun runtime",
   "type": "module",
   "main": "src/index.ts",
@@ -18,6 +18,14 @@
   ],
   "author": "AIVory",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aivorynet/agent-bun.git"
+  },
+  "homepage": "https://aivory.net/monitor/",
+  "bugs": {
+    "url": "https://github.com/aivorynet/agent-bun/issues"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "^5.0.0"
