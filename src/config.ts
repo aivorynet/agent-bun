@@ -29,7 +29,7 @@ export class AgentConfig {
 
   constructor(options: ConfigOptions = {}) {
     this.apiKey = options.apiKey || Bun.env.AIVORY_API_KEY || '';
-    this.backendUrl = options.backendUrl || Bun.env.AIVORY_BACKEND_URL || 'wss://api.aivory.net/ws/agent';
+    this.backendUrl = options.backendUrl || Bun.env.AIVORY_BACKEND_URL || 'wss://api.aivory.net/monitor/agent';
     this.environment = options.environment || Bun.env.AIVORY_ENVIRONMENT || 'production';
     this.samplingRate = options.samplingRate ?? parseFloat(Bun.env.AIVORY_SAMPLING_RATE || '1.0');
     this.maxCaptureDepth = options.maxCaptureDepth ?? parseInt(Bun.env.AIVORY_MAX_DEPTH || '10', 10);

@@ -128,7 +128,7 @@ export class BackendConnection {
         hostname: this.config.hostname,
         runtime: 'bun',
         runtime_version: Bun.version,
-        agent_version: '1.0.0',
+        agent_version: '0.1.1',
         environment: this.config.environment
       },
       timestamp: Date.now()
