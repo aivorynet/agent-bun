@@ -23,6 +23,8 @@ export class BackendConnection {
   private readonly maxReconnectAttempts = 10;
   private messageQueue: string[] = [];
   private reconnectTimer: Timer | null = null;
+  private heartbeatTimer: Timer | null = null;
+  private authFailed = false;
 
   constructor(config: AgentConfig) {
     this.config = config;
@@ -56,6 +58,7 @@ export class BackendConnection {
           console.log(`[AIVory Monitor] WebSocket closed: ${event.code}`);
         }
         this.authenticated = false;
+        this.stopHeartbeat();
         this.scheduleReconnect();
       };
 
@@ -80,6 +83,8 @@ export class BackendConnection {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+
+    this.stopHeartbeat();
 
     if (this.ws) {
       this.ws.close(1000, 'Agent shutdown');
@@ -119,6 +124,23 @@ export class BackendConnection {
     this.send(message);
   }
 
+  /**
+   * Sends a breakpoint hit to the backend.
+   */
+  sendBreakpointHit(breakpointId: string, data: Record<string, unknown>): void {
+    const message = JSON.stringify({
+      type: 'breakpoint_hit',
+      payload: {
+        breakpoint_id: breakpointId,
+        agent_id: this.config.agentId,
+        ...data
+      },
+      timestamp: Date.now()
+    });
+
+    this.send(message);
+  }
+
   private authenticate(): void {
     const authMessage = JSON.stringify({
       type: 'register',
@@ -128,7 +150,7 @@ export class BackendConnection {
         hostname: this.config.hostname,
         runtime: 'bun',
         runtime_version: Bun.version,
-        agent_version: '0.1.1',
+        agent_version: '0.1.2',
         environment: this.config.environment
       },
       timestamp: Date.now()
@@ -152,10 +174,15 @@ export class BackendConnection {
             console.log('[AIVory Monitor] Agent registered');
           }
           this.flushQueue();
+          this.startHeartbeat();
           break;
 
         case 'error':
           console.error(`[AIVory Monitor] Backend error: ${message.payload?.message}`);
+          if (message.payload?.code === 'auth_error' || message.payload?.code === 'invalid_api_key') {
+            this.authFailed = true;
+            this.ws?.close(4001, 'Authentication failed');
+          }
           break;
       }
     } catch (error) {
@@ -188,7 +215,36 @@ export class BackendConnection {
     }
   }
 
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN && this.authenticated) {
+        this.ws.send(JSON.stringify({
+          type: 'heartbeat',
+          payload: {
+            timestamp: Date.now(),
+            agent_id: this.config.agentId
+          }
+        }));
+      }
+    }, 30000);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   private scheduleReconnect(): void {
+    if (this.authFailed) {
+      if (this.config.debug) {
+        console.log('[AIVory Monitor] Auth failed, not reconnecting');
+      }
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       if (this.config.debug) {
         console.log('[AIVory Monitor] Max reconnect attempts reached');
@@ -196,7 +252,7 @@ export class BackendConnection {
       return;
     }
 
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 60000);
     this.reconnectAttempts++;
 
     if (this.config.debug) {
